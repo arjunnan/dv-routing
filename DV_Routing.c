@@ -2,21 +2,24 @@
 #include <stdlib.h>
 #include <conio.h>
 
-#define N 4
+//#define N 4
+int N;
+
 #define ROUTER_SEL 0/* Starts with 0 */
 #define STARTNODE 1/* Starts with 1 */
 #define ENDNODE 4/* Starts with 1 */
 
 //int RefTable[N][N] = {{0,2,7},{2,0,1},{7,1,0}};
 //int RefTable[N][N] = {{0,2,-1},{2,0,1},{-1,1,0}};
-int RefTable[N][N] = {{0,3,5,99},{3,0,99,1},{5,4,0,2},{99,1,2,0}};
+//int RefTable[N][N] = {{0,3,5,99},{3,0,99,1},{5,4,0,2},{99,1,2,0}};
 //int RefTable[N][N] = {{0,4,-1,-1},{4,0,8,3},{-1,8,0,1},{-1,3,1,0}};
 
 #define INFINITY 100000
 #define TABLE_FINAL 2
 #define TABLE_LOC 1
 
-int (*InputTable)[N][N];
+int **RefTable;
+int ***InputTable;//int (*InputTable)[N][N];
 int **BkTable;
 int **FinalTable;
 
@@ -37,18 +40,18 @@ int MainLoopCont = 1;
 
 struct router
 {
-    int dist[N];
-	int from[N];
-}rt[N];
+    int dist[100];//int dist[N]; MANI
+	int from[100];//int from[N]; MANI
+}rt[100];//rt[N];MANI
 
 
-int bpcost[N];
+int bpcost[100];//int bpcost[N]; MANI
 
 struct bkupcur
 {
 	int index;
-	int cost[N];
-}bpcur[N];
+	int cost[100];//int cost[N];MANI
+}bpcur[100];//bpcur[N];MANI
 int bpcurIndex=-1;
 
 #if 1/* Shortest path */
@@ -331,9 +334,100 @@ int main()
 	int count;
 	int shrtRet;
 	int src,dst;
+
+#ifndef FO	
+	FILE *fp;
+	int **Table;
+	int locLen;
+	int Cnt1,Cnt2,nog=0,spaces,Cnt3;
+	char line[500];
+	char tempStrVal[20];
+
+	fp = fopen("testfile.txt","r");
+	if(fp == NULL)
+	{
+		printf("Error in opening file\n");
+		getch();
+		return 0;
+	}
+	else
+		printf("File successfully opened\n");
+
+	/* Find the value of N */
+	while ( fgets ( line, sizeof line, fp ) != NULL ) /* read a line */
+	{
+		for(Cnt1 = 0;Cnt1 < strlen(line)-1;Cnt1++)
+		{
+			if(line[Cnt1] == ' ')
+				nog++;
+		}
+		break;
+	}
+	fclose(fp);
+
+	nog++;
 	
+	N = nog;/* Number of nodes */
+
+	/* Dynamic multidimensional memory allocation */
+	RefTable = (int **)malloc(nog * sizeof(int *));
+	for(Cnt1 = 0; Cnt1 < nog; Cnt1++)
+		RefTable[Cnt1] = malloc(nog * sizeof(int));
+
+	fp = fopen("testfile.txt","r");
+	Cnt1 = 0;
+	Cnt2=0;
+	Cnt3=0;
+	line[0] = '\0';
+	/* Filling the array */
+	while ( fgets ( line, sizeof line, fp ) != NULL ) /* read a line */
+	{
+		spaces = nog;
+		Cnt2=0;
+		Cnt3=0;
+		locLen = strlen(line) - 1;
+		tempStrVal[0] = '\0';
+		while(spaces)
+		{
+			if(line[Cnt3] != ' ')
+			{
+				strncat(tempStrVal,&line[Cnt3],1);
+			}
+			else
+			{
+				RefTable[Cnt1][Cnt2] = atoi(tempStrVal);
+				spaces--;
+				Cnt2++;
+				tempStrVal[0] = '\0';
+			}
+			Cnt3++;
+			if(Cnt3 == locLen)
+			{
+				RefTable[Cnt1][Cnt2] = atoi(tempStrVal);
+				spaces--;
+				Cnt2++;
+				tempStrVal[0] = '\0';
+				break;
+			}
+		}
+		Cnt1++;
+	}
+
+#endif
+
 	/* Dynamic Memory Allocation */
+	/*
 	InputTable = (int (*)[N][N])malloc(N*N*N*sizeof(int));
+	*/
+
+	InputTable =(int ***) malloc(N* sizeof(int **));
+
+    for(i=0;i<N;i++)
+    {
+        InputTable[i]=(int **)malloc(N * sizeof(int *));
+        for(j=0;j<N;j++)
+            InputTable[i][j]=(int *)malloc(N * sizeof(int));
+    }
 
 	/* Dynamic multidimensional memory allocation */
 	BkTable = (int **)malloc(N * sizeof(int *));
