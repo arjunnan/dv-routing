@@ -6,131 +6,66 @@
 int N;
 
 #define INFINITY 100000
+#define NODES 10000
 #define TABLE_FINAL 2
 #define TABLE_LOC 1
+
+#define OPT_LOAD_FILE 1
+#define OPT_SPECIFIC_ROUTER 2
+#define OPT_FINAL_ROUTING_TABLE 3
+#define OPT_LINK_FAILURE 4
+#define OPT_OPTIMAL_PATH_COST 5
+#define OPT_EXIT 6
 
 int **RefTable;
 int ***InputTable;
 int **BkTable;
 int **FinalTable;
-
 int **LocalTable;
 int **CopyTable;
-
-int **pa;
-
 int Update=1;
 int RowUpdated=0;
 int NoFurtherRowUpdate = 0;
-int ServicedRows[10000];
+int ServicedRows[NODES];
 int ServicedRowsLen=0;
 int RefFrameUpdated = 1;
 int FirstTime = 0;
 int MainLoopCont = 1;
 int RouterValidity;
 int userInp=0;
-int GlobalStart;
-
-struct router
-{
-	int dist[10000];
-	int from[10000];
-}rt[10000];
-
-
-int bpcost[10000];
+int bpcost[NODES];
 
 struct bkupcur
 {
 	int index;
-	int cost[10000];
-}bpcur[10000];
+	int cost[NODES];
+}bpcur[NODES];
 int bpcurIndex=-1;
 
-/* Shortest path */
-int pIndex=1;
-int de=0;
+#if 1 /* new short */
+#define MAX NODES
+#define TEMP 0
+#define PERM 1
 
-int mm,nn,noofterms,pcount=0;
-int aa[10000];
-int delay[10000],delay1[10000];
-int shortind,target;
+int LinkPath[MAX];
+int shortdist;
+int numPaths;
 
-int minimum(int a[],int len)
+struct node
 {
-	int i,min;
-	min = a[1];
-	if(len == 1)
-		return min;
-	for(i=2;i<=len;i++)
-	{
-		if(a[i] < min)
-			min = a[i];
-	}
-	return min;
-}
+	int predecessor;
+	int dist; /*minimum distance of node from source*/
+	int status;
+};
 
-void swap(int *p1,int *p2)
+int non;
+
+int findpath(int s,int d,int path[MAX],int *sdist,int selTable)
 {
-	int temp;
-	temp = *p1;
-	*p1 = *p2;
-	*p2 = temp;
-}
+	struct node state[MAX];
+	int i,min,count=0,current,newdist,u,v;
+	*sdist=0;
 
-int noofpermutations()
-{
-	int permutations=1,x;
-	for(x=1;x<=noofterms;x++)
-		permutations=permutations*x;
-	return permutations;
-}
-
-void permute(int *a,int m,int n)
-{
-	int i,j;
-	if(m==n)
-	{
-		if(GlobalStart == aa[0])
-		{
-			for(i=0;i<n;i++)
-			{
-				pa[pIndex][i+1] = aa[i];    	
-			}
-			pIndex++;
-		}
-	}
-	else
-	{
-		for(j=n;j<m;j++)
-		{
-			swap(&a[j],&a[n]);
-			permute(a,m,n+1);
-			swap(&a[j],&a[n]);
-		}
-	}
-}
-
-int ShortestPath(int start, int dest, int selTable)
-{
-
-	/* Shortest path */
-	int i,j,k;
-	int fact;
-	int lfact,tmp;
-	int **paths;
-	int **paths1;
-	int index=0;
-	int arrInd=0;
-	int flag = 0;
-
-	/* Finding factorial */
-	fact = 1;
-	for(i=1;i<=N;i++)
-		fact*=i; 
-
-	//MANI
-	//fact = 10000;
 	
 	if(selTable == TABLE_FINAL)
 	{
@@ -141,182 +76,81 @@ int ShortestPath(int start, int dest, int selTable)
 		LocalTable = CopyTable;
 	}
 
-	/* Dynamic multidimensional memory allocation */
-	paths = (int **)malloc((fact) * sizeof(int *));
-	for(i = 0; i <= fact; i++)
-		paths[i] = malloc((fact+1) * sizeof(int));
+	/* Make all nodes temporary */
+	for(i=1;i<=non;i++)
+	{
+		state[i].predecessor=0;
+		state[i].dist = INFINITY;
+		state[i].status = TEMP;
+	}
 
-	/* Dynamic multidimensional memory allocation */
-	paths1 = (int **)malloc((fact) * sizeof(int *));
-	for(i = 0; i <= fact; i++)
-		paths1[i] = malloc((fact+1) * sizeof(int));
+	/*Source node should be permanent*/
+	state[s].predecessor=0;
+	state[s].dist = 0;
+	state[s].status = PERM;
 
-	/* Dynamic multidimensional memory allocation */
-	pa = (int **)malloc((fact+1) * sizeof(int *));
-	for(i = 0; i <= (fact+1); i++)
-		pa[i] = malloc((N+1) * sizeof(int));
-
-	/* Shortest path */
-
-	for(i=1;i<=N;i++)
-		for(j=1;j<=N;j++)
+	/*Starting from source node until destination is found*/
+	current=s;
+	while(current!=d)
+	{
+		for(i=1;i<=non;i++)
 		{
-			if(i != j)
+			/*Checks for adjacent temporary nodes */
+			if ( LocalTable[current][i] > 0 && state[i].status == TEMP )
 			{
-				if((LocalTable[i][j] == -1) || (LocalTable[i][j] == 0))
-					LocalTable[i][j] = INFINITY;
-			}
-		}	
-
-#ifdef DEBUG			
-		/* Display */
-		printf("TABLE FOR SHORTEST CALCULATION \n");
-		for(i=1;i<=N;i++)
-		{
-			for(j=1;j<=N;j++)
-			{
-				printf("%d ",CopyTable[i][j]);
-			}
-			printf("\n");
-		}			
-		printf("\n");			
-#endif
-
-		for(i=1;i<=fact-1;i++)
-			for(j=1;j<=fact;j++)
-				paths[i][j] = 0;
-
-		noofterms = N;
-		for(i=0;i<N;i++)
-			aa[i] = i+1;
-
-		pIndex=1;
-		de=0;
-		pcount=0;
-
-		permute(&aa[0],N,0);
-
-#ifdef DEBUG
-		printf("Permutation Array \n");
-		for(i=1;i<=fact;i++)
-		{
-			for(j=1;j<=N;j++)
-			{
-				printf("%d\t",pa[i][j]);
-			}
-			printf("\n");
-		}
-		printf("\n");
-#endif
-		for(i=1;i<=fact;i++)
-		{
-			if(pa[i][1] != start)
-			{
-				continue;
-			}
-			de=0;
-			tmp=pa[i][1];
-			index=index+1;
-			paths[index][1]=tmp;
-			for(j=2;j<=N;j++)
-			{
-				arrInd = pa[i][j];
-				if(LocalTable[tmp][arrInd])
+				newdist=state[current].dist + LocalTable[current][i];
+				/*Checks for Relabeling*/
+				if( newdist < state[i].dist )
 				{
-					flag=1;
-					de=de+LocalTable[tmp][arrInd];
-					tmp=arrInd;
-					paths[index][j] = tmp;
-					if (tmp == dest)
-					{
-						delay[index]=de;
-						break;
-					}
-				}	
-				else
-				{
-					flag=0;
-					index=index-1;
-					break;
+					state[i].predecessor = current;
+					state[i].dist = newdist;
 				}
 			}
+		}/*End of for*/
 
-		}
-
-		j=1;
-		delay1[j]=delay[1];
-		for(i=1;i<=N;i++)
-			paths1[j][i] = paths[1][i];
-
-		lfact = 1;
-		for(i=1;i<=N-1;i++)
-			lfact*=i; 
-
-		//MANI
-		//lfact = 10000;
-		
-		for(i=2;i<=lfact;i++)
+		/*Search for temporary node with minimum distand make it current
+		node*/
+		min=INFINITY;
+		current=0;
+		for(i=1;i<=non;i++)
 		{
-			if(delay[i-1] != delay[i])
+			if(state[i].status == TEMP && state[i].dist < min)
 			{
-				j=j+1;
-				delay1[j]=delay[i];
-
-				for(k=1;k<=N;k++)
-					paths1[j][k] = paths[i][k];
+				min = state[i].dist;
+				current=i;
 			}
-		}
+		}/*End of for*/
 
-		target=minimum(delay1,j);
-		for(i=1;i<=j;i++)
-		{
-			if (delay1[i]==target)
-				break;
-		}
-		shortind=i;
+		if(current==0) /*If Source or Sink node is isolated*/
+			return 0;
+		state[current].status=PERM;
+	}/*End of while*/
 
-#ifdef DEBUG
-		/* displaying all the paths and also the selected one */
-		if((userInp == 5) && (selTable == TABLE_FINAL))
-		{
-			for(i=1;i<=j;i++)
-			{
-				for(k=1;k<=N;k++)
-				{
-					if (paths1[i][k] !=0)
-						printf("%d->",paths1[i][k]);
-					else
-						break;
-				}
-				printf("\b\b : delay = %d\n",delay1[i]);
-			}
-		}
-#endif
+	/* Getting full path in array from destination to source */
+	while( current!=0 )
+	{
+		count++;
+		path[count]=current;
+		current=state[current].predecessor;
+	}
 
-		if((userInp == 5) && (selTable == TABLE_FINAL))
-		{
-			/*shortest path n its delay*/
-			printf(" ");
-			printf("The shortest path is :");
-			for(j=1;j<=N;j++)
-			{
-				if (paths1[shortind][j] !=0)
-					printf("%d->",paths1[shortind][j]);
-				else
-					break;
-			}
-			printf("\b\b : delay = %d\n\n",delay1[shortind]);
-		}
-		return delay1[shortind];
-}
+	/*Getting distance from source to destination*/
+	for(i=count;i>1;i--)
+	{
+		u=path[i];
+		v=path[i-1];
+		*sdist+= LocalTable[u][v];
+	}
+	return (count);
+}/*End of findpath()*/ 
 
+#endif /* new  short*/
 
 int main()
 {
 	int i,j,k,m,p;
 	int SerLen;
 	int Proceed;
-	int shrtRet;
 	int src,dst;
 
 	char *newline = NULL; 
@@ -330,7 +164,7 @@ int main()
 	int RouterInput=0,SourceInput=0,DestInput=0;
 	int FileValid = 0;
 
-	while(userInp != 6)/* Exit condition */
+	while(userInp != OPT_EXIT)/* Exit condition */
 	{
 		printf("1 - LOAD FILE \n");
 		printf("2 - OUTPUT ROUTING PROCESS FOR A SPECIFIC ROUTER \n");		
@@ -342,11 +176,11 @@ int main()
 
 		FileValid = 0;
 
-		if(userInp == 6)
+		if(userInp == OPT_EXIT)
 		{
 			return 0;
 		}
-		else if(userInp == 1)			
+		else if(userInp == OPT_LOAD_FILE)			
 		{
 			printf("Please load original routing table data file: \n");
 			scanf("%s",&FileName);
@@ -387,6 +221,7 @@ int main()
 				nog++;
 
 				N = nog;/* Number of nodes */
+				non = nog;
 
 				/* Dynamic multidimensional memory allocation */
 				RefTable = (int **)malloc(nog * sizeof(int *));
@@ -432,7 +267,7 @@ int main()
 					Cnt1++;
 				}
 				InputObtained = 1;
-				printf("Original routing table is as follows:\n");
+				printf("Original routing table is as follows:\n\n");
 				for(i=0; i < N;i++)
 				{
 					for(j=0;j < N;j++)
@@ -446,7 +281,10 @@ int main()
 #endif		
 
 		}
-		else if((userInp == 2) || (userInp == 3) || (userInp == 4) || (userInp == 5))
+		else if((userInp == OPT_SPECIFIC_ROUTER) || 
+				(userInp == OPT_FINAL_ROUTING_TABLE) || 
+				(userInp == OPT_LINK_FAILURE) || 
+				(userInp == OPT_OPTIMAL_PATH_COST))
 		{
 			if(InputObtained != 1)
 			{
@@ -531,7 +369,7 @@ int main()
 				}
 				InputObtained = 1;
 
-				if(userInp == 2)
+				if(userInp == OPT_SPECIFIC_ROUTER)
 				{
 					printf("Please input a router number:\n");
 					scanf("%d",&RouterInput);
@@ -547,12 +385,12 @@ int main()
 						RouterInput--;
 					}
 				}
-				else if(userInp == 5)
+				else if(userInp == OPT_OPTIMAL_PATH_COST)
 				{
 					printf("Please input the source and destination router number:\n");
 					scanf("%d %d",&SourceInput,&DestInput);
 				}
-				else if(userInp == 4)
+				else if(userInp == OPT_LINK_FAILURE)
 				{
 					printf("Cost change or link failure not supported \n\n");
 				}
@@ -598,7 +436,7 @@ int main()
 					}
 				}
 
-				if(userInp == 2)
+				if(userInp == OPT_SPECIFIC_ROUTER)
 				{
 					/* Printing the array to see if the input is correct */
 					for(i=0;i<N;i++)
@@ -740,16 +578,7 @@ int main()
 						printf("\n");
 
 #endif
-						/* Distance vector array */
-						for(i=0;i<N;i++)
-						{
-							for(j=0;j<N;j++)
-							{
-								rt[i].dist[j] = InputTable[m][i][j];
-								rt[i].from[j]=j;
-							}
-						}
-
+							
 						for(i=1;i<=N;i++)
 						{
 							for(j=1;j<=N;j++)
@@ -785,9 +614,16 @@ int main()
 								dst = i;
 								if((src != dst) && (CopyTable[src][dst] != INFINITY))
 								{
-									GlobalStart = src;
-									shrtRet = ShortestPath(src,dst,TABLE_LOC);	
-									InputTable[m][m][i-1] = shrtRet;
+									/* shrtRet = ShortestPath(src,dst,TABLE_LOC);	*/
+									numPaths = findpath(src,dst,LinkPath,&shortdist,TABLE_LOC);
+									if(shortdist != 0)
+									{
+										InputTable[m][m][i-1] = shortdist;
+									}
+									else
+									{
+										InputTable[m][m][i-1] = -1;
+									}
 								}
 							}
 #ifdef DEBUG
@@ -837,7 +673,7 @@ int main()
 							}
 							printf("\n");
 #endif
-							if(userInp == 2)
+							if(userInp == OPT_SPECIFIC_ROUTER)
 							{
 								if((MainLoopCont) && (RouterInput == m) && (RouterValidity))
 								{
@@ -893,7 +729,7 @@ int main()
 					}
 				}
 
-				if(userInp == 3)
+				if(userInp == OPT_FINAL_ROUTING_TABLE)
 				{
 					/* Display */
 					//printf("++++++++++++++FINAL ROUTING TABLE+++++++++++++++++\n");
@@ -909,7 +745,7 @@ int main()
 					printf("\n");			
 				}
 
-				if(userInp == 5)
+				if(userInp == OPT_OPTIMAL_PATH_COST)
 				{
 					if(SourceInput < 1 || SourceInput > N || DestInput > N || DestInput < 1)
 					{
@@ -920,8 +756,22 @@ int main()
 					{
 						if(SourceInput != DestInput)		
 						{
-							GlobalStart = SourceInput;
-							shrtRet = ShortestPath(SourceInput,DestInput,TABLE_FINAL);
+							/* shrtRet = ShortestPath(SourceInput,DestInput,TABLE_FINAL); */
+							numPaths = findpath(SourceInput,DestInput,LinkPath,&shortdist,TABLE_FINAL);
+							if(shortdist != 0)
+							{
+								printf("Shortest distance is : %d\n", shortdist);
+								printf("Shortest Path is : ");
+								for(i=numPaths;i>1;i--)
+									printf("%d->",LinkPath[i]);
+								printf("%d",LinkPath[i]);
+								printf("\n");
+
+							}
+							else
+							{
+								printf("There is no path from source to destination node\n");
+							}
 						}
 						else
 						{
