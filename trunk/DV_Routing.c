@@ -288,7 +288,7 @@ int main()
 		{
 			if(InputObtained != 1)
 			{
-				printf("No input file is loaded. Enter a valid input \n\n");
+				printf("No input file is loaded. Please load the input file before performing these operations \n\n");
 			}
 			else
 			{
@@ -749,7 +749,7 @@ int main()
 				{
 					if(SourceInput < 1 || SourceInput > N || DestInput > N || DestInput < 1)
 					{
-						printf("Invalid start and destination nodes\n");
+						printf("Invalid input for the nodes\n");
 						//break;
 					}
 					else
@@ -789,6 +789,7 @@ int main()
 		{
 			printf("Invalid Input. Please enter again\n");
 		}
+		fflush(stdin);
 	}
 	getch();/* _getch() */
 	return 0;	
