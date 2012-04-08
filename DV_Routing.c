@@ -380,7 +380,7 @@ int main()
 					}
 					else
 					{
-						printf("Each updating step of the router is given below:\n\n");
+						printf("Each step of the updating process of this router is:\n\n");
 						RouterValidity = 1;
 						RouterInput--;
 					}
@@ -733,7 +733,7 @@ int main()
 				{
 					/* Display */
 					//printf("++++++++++++++FINAL ROUTING TABLE+++++++++++++++++\n");
-					printf("The final routing table is shown below:\n\n");
+					printf("Final routing table computed by the DV algorithm is:\n\n");
 					for(i=1;i<=N;i++)
 					{
 						for(j=1;j<=N;j++)
@@ -759,12 +759,12 @@ int main()
 							/* shrtRet = ShortestPath(SourceInput,DestInput,TABLE_FINAL); */
 							numPaths = findpath(SourceInput,DestInput,LinkPath,&shortdist,TABLE_FINAL);
 							if(shortdist != 0)
-							{
-								printf("Shortest distance is : %d\n", shortdist);
-								printf("Shortest Path is : ");
+							{								
+								printf("The shortest path from %d to %d is ",SourceInput,DestInput);
 								for(i=numPaths;i>1;i--)
-									printf("%d->",LinkPath[i]);
+									printf("%d-",LinkPath[i]);
 								printf("%d",LinkPath[i]);
+								printf(", total cost is %d\n", shortdist);
 								printf("\n");
 
 							}
