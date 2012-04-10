@@ -182,29 +182,32 @@ int main()
 		}
 		else if(userInp == OPT_LOAD_FILE)			
 		{
-			printf("Please load original routing table data file: \n");
-			scanf("%s",&FileName);
+			if(InputObtained == 0)		
+			{
+				printf("Please load original routing table data file: \n");
+				scanf("%s",&FileName);
 #ifdef DEBUG			
-			printf("FileName = \"%s\"\n", FileName);
+				printf("FileName = \"%s\"\n", FileName);
 #endif
 
 #if 1
-			fp = fopen(FileName,"r");
-			if(fp == NULL)
-			{
-				printf("Error in opening file\n\n");
-				//getch();
-				//return 0;
-			}
-			else
-			{
+				fp = fopen(FileName,"r");
+				if(fp == NULL)
+				{
+					printf("\nError in opening file\n\n");
+					//getch();
+					//return 0;
+				}
+				else
+				{
 #ifdef DEBUG				
-				printf("File successfully opened\n");
+					printf("File successfully opened\n");
 #endif
-				FileValid = 1;
+					FileValid = 1;
+				}
 			}
 
-			if(FileValid == 1)			
+			if((FileValid == 1)	&& (InputObtained == 0))		
 			{
 				/* Find the value of N */
 				while ( fgets ( line, sizeof line, fp ) != NULL ) /* read a line */
@@ -278,6 +281,11 @@ int main()
 				}
 				printf("\n");
 			}
+			else
+			{
+				printf("\nOne input file is already opened.\n");
+				printf("To open another file, please exit and re-run the program\n\n");				
+			}
 #endif		
 
 		}
@@ -288,7 +296,7 @@ int main()
 		{
 			if(InputObtained != 1)
 			{
-				printf("No input file is loaded. Please load the input file before performing these operations \n\n");
+				printf("\nNo input file is loaded. Please load the input file before performing these operations \n\n");
 			}
 			else
 			{
@@ -371,7 +379,7 @@ int main()
 
 				if(userInp == OPT_SPECIFIC_ROUTER)
 				{
-					printf("Please input a router number:\n");
+					printf("\nPlease input a router number:\n");
 					scanf("%d",&RouterInput);
 					if(RouterInput < 1 || RouterInput > N)
 					{
@@ -387,12 +395,12 @@ int main()
 				}
 				else if(userInp == OPT_OPTIMAL_PATH_COST)
 				{
-					printf("Please input the source and destination router number:\n");
+					printf("\nPlease input the source and destination router number:\n");
 					scanf("%d %d",&SourceInput,&DestInput);
 				}
 				else if(userInp == OPT_LINK_FAILURE)
 				{
-					printf("Cost change or link failure not supported \n\n");
+					printf("\nCost change or link failure not supported \n\n");
 				}
 
 				InputTable =(int ***) malloc(N* sizeof(int **));
@@ -733,7 +741,7 @@ int main()
 				{
 					/* Display */
 					//printf("++++++++++++++FINAL ROUTING TABLE+++++++++++++++++\n");
-					printf("Final routing table computed by the DV algorithm is:\n\n");
+					printf("\nFinal routing table computed by the DV algorithm is:\n\n");
 					for(i=1;i<=N;i++)
 					{
 						for(j=1;j<=N;j++)
@@ -760,7 +768,7 @@ int main()
 							numPaths = findpath(SourceInput,DestInput,LinkPath,&shortdist,TABLE_FINAL);
 							if(shortdist != 0)
 							{								
-								printf("The shortest path from %d to %d is ",SourceInput,DestInput);
+								printf("\nThe shortest path from %d to %d is ",SourceInput,DestInput);
 								for(i=numPaths;i>1;i--)
 									printf("%d-",LinkPath[i]);
 								printf("%d",LinkPath[i]);
@@ -770,16 +778,16 @@ int main()
 							}
 							else
 							{
-								printf("There is no path from source to destination node\n");
+								printf("\nThere is no path from source to destination node\n");
 							}
 						}
 						else
 						{
-							printf("Invalid start and destination nodes\n");
+							printf("\nInvalid start and destination nodes\n");
 							//break;
 						}
 #ifdef DEBUG
-						printf("\n The shortest path between the selected nodes = %d\n",shrtRet);
+						printf("\nThe shortest path between the selected nodes = %d\n",shrtRet);
 #endif
 					}
 				}
