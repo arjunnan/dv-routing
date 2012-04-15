@@ -273,6 +273,7 @@ int main()
 				printf("Original routing table is as follows:\n\n");
 				for(i=0; i < N;i++)
 				{
+					printf("Router %d: ",i+1);				
 					for(j=0;j < N;j++)
 					{
 						printf("%d ",RefTable[i][j]);
@@ -443,6 +444,19 @@ int main()
 						InputTable[k][k][j] = RefTable[i][j];
 					}
 				}
+				
+#ifdef DEBUG
+				printf("RefTable is: \n\n");
+				for(i=0;i<N;i++)
+				{
+					for(j=0;j<N;j++)
+					{
+							printf("%d ",RefTable[i][j]);
+					}
+					printf("\n");
+				}
+				printf("\n");
+#endif
 
 				if(userInp == OPT_SPECIFIC_ROUTER)
 				{
@@ -453,11 +467,15 @@ int main()
 						{
 							for(j=0;j<N;j++)
 							{
-								for(k=0;k<N;k++)
+								if(RefTable[RouterInput][j] != -1)										
 								{
-									printf("%d ",InputTable[i][j][k]);
+									printf("Router %d: ",j+1);							
+									for(k=0;k<N;k++)
+									{
+											printf("%d ",InputTable[i][j][k]);
+									}
+									printf("\n");
 								}
-								printf("\n");
 							}
 							printf("\n");
 						}
@@ -688,12 +706,16 @@ int main()
 									/* Display */
 									for(i=0;i<N;i++)
 									{
-										for(j=0;j<N;j++)
+										if(RefTable[m][i] != -1)										
 										{
-											printf("%d ",InputTable[m][i][j]);
+											printf("Router %d: ",i+1);
+											for(j=0;j<N;j++)
+											{
+												printf("%d ",InputTable[m][i][j]);
+											}
+											printf("\n");
 										}
-										printf("\n");
-									}			
+									}
 									printf("\n");			
 								}
 							}
@@ -744,6 +766,7 @@ int main()
 					printf("\nFinal routing table computed by the DV algorithm is:\n\n");
 					for(i=1;i<=N;i++)
 					{
+						printf("Router %d: ",i);
 						for(j=1;j<=N;j++)
 						{
 							printf("%d ",FinalTable[i][j]);
@@ -795,7 +818,7 @@ int main()
 		}
 		else
 		{
-			printf("Invalid Input. Please enter again\n");
+			printf("Invalid Input. Please enter again\n\n");
 		}
 		fflush(stdin);
 	}
