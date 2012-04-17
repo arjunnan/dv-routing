@@ -21,6 +21,7 @@ int **RefTable;
 int ***InputTable;
 int **BkTable;
 int **FinalTable;
+int **LclTable;
 int **LocalTable;
 int **CopyTable;
 int Update=1;
@@ -761,6 +762,23 @@ int main()
 
 				if(userInp == OPT_FINAL_ROUTING_TABLE)
 				{
+					LclTable = FinalTable;
+					for(i=1;i<=N;i++)
+					{
+						for(j=1;j<=N;j++)
+						{
+							if(LclTable[i][j] == -1)
+							{
+								shortdist = 0;
+								numPaths = findpath(i,j,LinkPath,&shortdist,TABLE_FINAL);
+								if(shortdist != 0)
+									LclTable[i][j] = shortdist;
+								else
+									LclTable[i][j] = -1;
+							}					
+						}
+					}			
+
 					/* Display */
 					//printf("++++++++++++++FINAL ROUTING TABLE+++++++++++++++++\n");
 					printf("\nFinal routing table computed by the DV algorithm is:\n\n");
@@ -769,7 +787,7 @@ int main()
 						printf("Router %d: ",i);
 						for(j=1;j<=N;j++)
 						{
-							printf("%d ",FinalTable[i][j]);
+							printf("%d ",LclTable[i][j]);
 						}
 						printf("\n");
 					}			
@@ -825,4 +843,4 @@ int main()
 	getch();/* _getch() */
 	return 0;	
 }
-
+ 
