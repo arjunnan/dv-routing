@@ -9,6 +9,7 @@ int N;
 #define NODES 10000
 #define TABLE_FINAL 2
 #define TABLE_LOC 1
+#define TABLE_INT 3
 
 #define OPT_LOAD_FILE 1
 #define OPT_SPECIFIC_ROUTER 2
@@ -22,6 +23,7 @@ int ***InputTable;
 int **BkTable;
 int **FinalTable;
 int **LclTable;
+int **ChkTable;
 int **LocalTable;
 int **CopyTable;
 int Update=1;
@@ -75,6 +77,10 @@ int findpath(int s,int d,int path[MAX],int *sdist,int selTable)
 	else if(selTable == TABLE_LOC)
 	{
 		LocalTable = CopyTable;
+	}
+	else if(selTable == TABLE_INT)
+	{
+		LocalTable = ChkTable;
 	}
 
 	/* Make all nodes temporary */
@@ -149,7 +155,7 @@ int findpath(int s,int d,int path[MAX],int *sdist,int selTable)
 
 int main()
 {
-	int i,j,k,m,p;
+	int i,j,k,m,p,r,s;
 	int SerLen;
 	int Proceed;
 	int src,dst;
@@ -425,6 +431,11 @@ int main()
 					FinalTable[i] = malloc((N+1) * sizeof(int));
 
 				/* Dynamic multidimensional memory allocation */
+				ChkTable = (int **)malloc((N+1) * sizeof(int *));
+				for(i = 0; i <= (N+1); i++)
+					ChkTable[i] = malloc((N+1) * sizeof(int));
+
+				/* Dynamic multidimensional memory allocation */
 				CopyTable = (int **)malloc((N+1) * sizeof(int *));
 				for(i = 0; i <= (N+1); i++)
 					CopyTable[i] = malloc((N+1) * sizeof(int));
@@ -460,20 +471,36 @@ int main()
 #endif
 
 				if(userInp == OPT_SPECIFIC_ROUTER)
-				{
+				{				
 					/* Printing the array to see if the input is correct */
 					for(i=0;i<N;i++)
-					{
+					{						
 						if((i == RouterInput) && (RouterValidity))
-						{
+						{						
 							for(j=0;j<N;j++)
 							{
 								if(RefTable[RouterInput][j] != -1)										
-								{
-									printf("Router %d: ",j+1);							
+								{								
+									printf("Router %d: ",j+1);												
 									for(k=0;k<N;k++)
-									{
-											printf("%d ",InputTable[i][j][k]);
+									{	
+#if 0												
+										if(InputTable[i][j][k] == -1)
+										{
+											shortdist = 0;
+											numPaths = findpath(j+1,k+1,LinkPath,&shortdist,TABLE_INT);
+											
+											if(shortdist != 0)
+											{											
+												InputTable[i][j][k] = shortdist;
+												printf("%d ",shortdist);
+											}
+											else
+												printf("%d ",InputTable[i][j][k]);
+										}									
+#else										
+										printf("%d ",InputTable[i][j][k]);
+#endif
 									}
 									printf("\n");
 								}
@@ -704,6 +731,16 @@ int main()
 							{
 								if((MainLoopCont) && (RouterInput == m) && (RouterValidity))
 								{
+#if 1
+									for(r=1;r<=N;r++)
+									{
+										for(s=1;s<=N;s++)
+										{	
+											ChkTable[r][s] = InputTable[m][r-1][s-1];
+										}
+									}					
+#endif									
+								
 									/* Display */
 									for(i=0;i<N;i++)
 									{
@@ -712,7 +749,26 @@ int main()
 											printf("Router %d: ",i+1);
 											for(j=0;j<N;j++)
 											{
+#if 1
+												if(InputTable[m][i][j] == 0)
+													printf("%d ",InputTable[m][i][j]);	
+												else if(InputTable[m][i][j] == -1)
+												{
+													shortdist = 0;
+													numPaths = findpath(i+1,j+1,LinkPath,&shortdist,TABLE_INT);													
+													if(shortdist != 0)
+													{											
+														InputTable[i][j][k] = shortdist;
+														printf("%d ",shortdist);
+													}
+													else
+														printf("%d ",InputTable[m][i][j]);
+												}
+												else
+													printf("%d ",InputTable[m][i][j]);	
+#else
 												printf("%d ",InputTable[m][i][j]);
+#endif
 											}
 											printf("\n");
 										}
